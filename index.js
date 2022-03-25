@@ -31,9 +31,63 @@ async function initializeWebSocket() {
 
     const ws = new WebSocket(connectionUrl);
 
-    ws.on('message', function message(data) {
+    ws.on('open', function () {
+        console.log('Connection established')
+    });
+
+    ws.on('message', function checkMessageType(data) {
         console.log('received: %s', data);
+
+        const discordPayload = JSON.parse(data); 
+
+        // gateway 'hello'
+        if (discordPayload['op'] == 10) { 
+            const heartbeatInterval = 
+            discordPayload['d']['heartbeat_interval'];
+            // wait interval * jitter before sending a heartbeat to discord.
+            await new Promise(resolve => setTimeout(
+                resolve, heartbeatInterval*0.1));
+            
+            
+            setInterval(function heartbeat(){ 
+                ws.send()
+                heartbeatInterval})
+            
+    
+            
+        }
+        // gateway requests heartbeat
+        if (discordPayload['op'] == 1) {
+            // send heartbeat
+        }
+        // gateway acknowledges heartbeat
+        if (discordPayload['op'] == 11) {
+            // console.log the heartbeat
+        }
+
+        
     });
 }
 
-initializeWebSocket();
+
+function debug() { 
+    const my_json = {
+        t: null,
+        s: null,
+        op: 10,
+        d: {
+          heartbeat_interval: 41250,
+          _trace: [ '["gateway-prd-main-lrzk",{"micros":0.0}]' ]
+        }
+      }
+
+    
+    console.log(my_json['d']['heartbeat_interval'])
+
+    if (my_json['op'] == 10) { 
+        console.log('hello')
+    }
+    
+}
+
+debug()
