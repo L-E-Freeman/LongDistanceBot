@@ -41,7 +41,6 @@ async function createSlashCommand(name, description) {
     }
 }
 
-
 async function listRegisteredCommands() {
 
     const headers = {

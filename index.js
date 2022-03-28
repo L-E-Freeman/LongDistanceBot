@@ -21,7 +21,6 @@ async function getWebsocketGateway() {
     return gatewayUrl;
 }
 
-
 async function initializeWebSocket() {
 
     const gatewayUrl = await getWebsocketGateway();
@@ -31,63 +30,63 @@ async function initializeWebSocket() {
 
     const ws = new WebSocket(connectionUrl);
 
-    ws.on('open', function () {
-        console.log('Connection established')
+    ws.on('open', function open() {
+        console.log('Connection established');
     });
+
+    return ws;
+}
+
+async function runWebsocket() {
+    const ws = await initializeWebSocket();
 
     ws.on('message', function checkMessageType(data) {
         console.log('received: %s', data);
+        const discordPayload = JSON.parse(data);
 
-        const discordPayload = JSON.parse(data); 
-
-        // gateway 'hello'
-        if (discordPayload['op'] == 10) { 
-            const heartbeatInterval = 
-            discordPayload['d']['heartbeat_interval'];
-            // wait interval * jitter before sending a heartbeat to discord.
-            await new Promise(resolve => setTimeout(
-                resolve, heartbeatInterval*0.1));
-            
-            
-            setInterval(function heartbeat(){ 
-                ws.send()
-                heartbeatInterval})
-            
-    
-            
+        if (discordPayload['op'] == 10) {
+            heartbeat(discordPayload, ws);
+            identify(ws);
         }
-        // gateway requests heartbeat
-        if (discordPayload['op'] == 1) {
-            // send heartbeat
-        }
-        // gateway acknowledges heartbeat
-        if (discordPayload['op'] == 11) {
-            // console.log the heartbeat
-        }
-
-        
     });
 }
 
+async function heartbeat(discordPayload, ws) {
+    const heartbeatInterval =
+        discordPayload['d']['heartbeat_interval'];
 
-function debug() { 
-    const my_json = {
-        t: null,
-        s: null,
-        op: 10,
-        d: {
-          heartbeat_interval: 41250,
-          _trace: [ '["gateway-prd-main-lrzk",{"micros":0.0}]' ]
-        }
-      }
+    // Wait interval * jitter before sending a heartbeat to discord
+    await new Promise(resolve => setTimeout(
+        resolve, heartbeatInterval * 0.1,
+    ));
 
-    
-    console.log(my_json['d']['heartbeat_interval'])
-
-    if (my_json['op'] == 10) { 
-        console.log('hello')
+    function pulseHeartbeat() {
+        const heartbeatJSON = {
+            'op': 1,
+            'd': null,
+        };
+        ws.send(JSON.stringify(heartbeatJSON));
     }
-    
+
+    setInterval(pulseHeartbeat, heartbeatInterval);
+
 }
 
-debug()
+async function identify(ws) {
+    const identifyJSON = {
+        'op': 2,
+        'd': {
+            'token': bot_token,
+            'intents': 512,
+            'properties': {
+                '$os': 'windows',
+                '$browser': 'LongDistanceBot',
+                '%device': 'LongDistanceBot',
+            },
+        },
+    };
+
+    ws.send(JSON.stringify(identifyJSON));
+}
+
+runWebsocket();
