@@ -37,38 +37,69 @@ async function initializeWebSocket() {
     return ws;
 }
 
+
+// 'op': Code for type of event
+// 's': Sequence number for resuming. Only present when op is 0.
+// 't': Event name for the payload.
+// 'd': Event data.
 async function runWebsocket() {
     const ws = await initializeWebSocket();
 
     ws.on('message', function checkMessageType(data) {
-        console.log('received: %s', data);
         const discordPayload = JSON.parse(data);
 
+        // 'Hello' opcode.
         if (discordPayload['op'] == 10) {
-            heartbeat(discordPayload, ws);
+            console.log('Received "hello" from Discord.');
+            const heartbeatInterval =
+            discordPayload['d']['heartbeat_interval'];
+            continueHeartbeat(heartbeatInterval, ws);
             identify(ws);
         }
+
+        // Heartbeat acknowledgement from discord.
+        if (discordPayload['op'] == 11) {
+            console.log('Heartbeat acknowledged!');
+        }
+
+        // Dispatch received.
+        if (discordPayload['op'] == 0) {
+            // gateway dispatch opcode. store 's'.
+        }
+
+        // Ready event.
+        if (discordPayload['t'] == 'READY') {
+            console.log('received READY data: %s', data);
+        }
+
+        // Heartbeat request.
+        if (discordPayload['op'] == 1) {
+            console.log('Heartbeat requested');
+            pulseHeartbeat(ws);
+        }
+
+
     });
 }
 
-async function heartbeat(discordPayload, ws) {
-    const heartbeatInterval =
-        discordPayload['d']['heartbeat_interval'];
+async function pulseHeartbeat(ws) {
+    const heartbeatJSON = {
+        'op': 1,
+        'd': null,
+    };
+    ws.send(JSON.stringify(heartbeatJSON));
+    console.log('Heartbeat sent!');
+}
+
+async function continueHeartbeat(heartbeatInterval, ws) {
 
     // Wait interval * jitter before sending a heartbeat to discord
     await new Promise(resolve => setTimeout(
         resolve, heartbeatInterval * 0.1,
     ));
 
-    function pulseHeartbeat() {
-        const heartbeatJSON = {
-            'op': 1,
-            'd': null,
-        };
-        ws.send(JSON.stringify(heartbeatJSON));
-    }
-
-    setInterval(pulseHeartbeat, heartbeatInterval);
+    // Pass argument to setInterval without calling pulseHeartbeat function.
+    setInterval(function() { pulseHeartbeat(ws); }, heartbeatInterval);
 
 }
 
