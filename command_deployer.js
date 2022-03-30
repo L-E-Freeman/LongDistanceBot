@@ -41,7 +41,7 @@ async function createSlashCommand(name, description) {
     }
 }
 
-async function listRegisteredCommands() {
+async function getRegisteredCommands() {
 
     const headers = {
         'Authorization': `Bot ${bot_token}`,
@@ -56,6 +56,11 @@ async function listRegisteredCommands() {
 
     const data = await response.json();
 
-    return console.log(data);
+    return data;
 
+}
+
+async function listRegisteredCommands() {
+    const commands = await getRegisteredCommands();
+    console.log(commands);
 }

@@ -1,12 +1,19 @@
+// Required packages
 import fetch from 'node-fetch';
 import 'dotenv/config';
 import WebSocket from 'ws';
+
+// Command handler functions
+import { commandDict } from './commands.js';
+import { ping } from './command_handler.js';
+
 
 const bot_token = process.env.BOT_TOKEN;
 const apiUrl = 'https://discord.com/api';
 const headers = {
     'Authorization': `Bot ${bot_token}`,
 };
+
 
 async function getWebsocketGateway() {
 
@@ -42,7 +49,7 @@ async function initializeWebSocket() {
 // 's': Sequence number for resuming. Only present when op is 0.
 // 't': Event name for the payload.
 // 'd': Event data.
-async function runWebsocket() {
+async function runBot() {
     const ws = await initializeWebSocket();
 
     ws.on('message', function checkMessageType(data) {
@@ -59,17 +66,7 @@ async function runWebsocket() {
 
         // Heartbeat acknowledgement from discord.
         if (discordPayload['op'] == 11) {
-            console.log('Heartbeat acknowledged!');
-        }
-
-        // Dispatch received.
-        if (discordPayload['op'] == 0) {
-            // gateway dispatch opcode. store 's'.
-        }
-
-        // Ready event.
-        if (discordPayload['t'] == 'READY') {
-            console.log('received READY data: %s', data);
+            console.log(`${ Date.now() / 1000 }: Heartbeat Acknowledged!`);
         }
 
         // Heartbeat request.
@@ -78,6 +75,29 @@ async function runWebsocket() {
             pulseHeartbeat(ws);
         }
 
+        // Dispatch received.
+        if (discordPayload['op'] == 0) {
+            // gateway dispatch opcode. store 's' below.
+            // *************************************
+            // TODO: Consider adding function to check type of dispatch.
+            try {
+                const commandName = discordPayload['d']['data']['name'];
+                if (commandName) {
+                    if (commandName in commandDict) {
+                        console.log(`Responding to ${commandName} command`);
+                        commandDict[commandName](discordPayload);
+                    }
+                }
+            }
+            catch (err) {
+                // Command not used
+            }
+        }
+
+        // Ready event.
+        if (discordPayload['t'] == 'READY') {
+            console.log('Discord READY!');
+        }
 
     });
 }
@@ -88,7 +108,7 @@ async function pulseHeartbeat(ws) {
         'd': null,
     };
     ws.send(JSON.stringify(heartbeatJSON));
-    console.log('Heartbeat sent!');
+    console.log(`${ Date.now() / 1000 }: Heartbeat sent!`);
 }
 
 async function continueHeartbeat(heartbeatInterval, ws) {
@@ -120,4 +140,4 @@ async function identify(ws) {
     ws.send(JSON.stringify(identifyJSON));
 }
 
-runWebsocket();
+runBot();
