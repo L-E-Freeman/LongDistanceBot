@@ -2,10 +2,11 @@ import fetch from 'node-fetch';
 import 'dotenv/config';
 
 
-const client_id = process.env.CLIENT_ID;
-const guild_id = process.env.GUILD_ID;
+const clientID = process.env.CLIENT_ID;
+const guildID= process.env.GUILD_ID;
 const bot_token = process.env.BOT_TOKEN;
 const api_url = 'https://discord.com/api/';
+
 
 
 async function createSlashCommand(name, description) {
@@ -15,21 +16,21 @@ async function createSlashCommand(name, description) {
         'Content-Type': 'application/json',
     };
 
-    const command_json = {
+    const guildCommandURL = api_url.concat(
+        `v8/applications/${clientID}/guilds/${guildID}/commands`);
+
+    const commandJSON = {
         'name': name,
         'type': 1,
         'description': description,
     };
 
-    const guild_command_url = api_url.concat(
-        `v8/applications/${client_id}/guilds/${guild_id}/commands`);
-
     // POST for new command
     const response = await fetch(
-        guild_command_url, {
+        guildCommandURL, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify(command_json) });
+            body: JSON.stringify(commandJSON) });
 
     const data = await response.json();
 
@@ -41,6 +42,35 @@ async function createSlashCommand(name, description) {
     }
 }
 
+async function deleteSlashCommand(commandName, commandID) {
+
+    const headers = {
+        'Authorization': `Bot ${bot_token}`,
+        'Content-Type': 'application/json',
+    };
+
+    const guildCommandURLDelete = api_url.concat(
+        `v8/applications/${clientID}/guilds/${guildID}/commands/${commandID}`
+    );
+    
+    const response = await fetch(
+        guildCommandURLDelete, {
+            method: 'DELETE',
+            headers: headers,
+        });
+
+    // Discord returns 204 no content on success.
+    if (response.status === 204) {
+        console.log(`'${commandName}' command deleted successfully.`);
+    } 
+    else { 
+        const data = await response.json();
+        const err = JSON.stringify(data['message']);
+        console.log(`Command not deleted. Error: ${err})`)
+    }
+    
+}
+
 async function getRegisteredCommands() {
 
     const headers = {
@@ -48,7 +78,7 @@ async function getRegisteredCommands() {
     };
 
     const guild_command_url = api_url.concat(
-        `v8/applications/${client_id}/guilds/${guild_id}/commands`);
+        `v8/applications/${clientID}/guilds/${guildID}/commands`);
 
     // GET for list of commands from API
     const response = await fetch(
