@@ -3,10 +3,9 @@ import 'dotenv/config';
 
 
 const clientID = process.env.CLIENT_ID;
-const guildID= process.env.GUILD_ID;
+const guildID = process.env.GUILD_ID;
 const bot_token = process.env.BOT_TOKEN;
-const api_url = 'https://discord.com/api/';
-
+const api_url = 'https://discord.com/api/v8/';
 
 
 async function createSlashCommand(name, description) {
@@ -17,7 +16,7 @@ async function createSlashCommand(name, description) {
     };
 
     const guildCommandURL = api_url.concat(
-        `v8/applications/${clientID}/guilds/${guildID}/commands`);
+        `applications/${clientID}/guilds/${guildID}/commands`);
 
     const commandJSON = {
         'name': name,
@@ -50,9 +49,9 @@ async function deleteSlashCommand(commandName, commandID) {
     };
 
     const guildCommandURLDelete = api_url.concat(
-        `v8/applications/${clientID}/guilds/${guildID}/commands/${commandID}`
+        `applications/${clientID}/guilds/${guildID}/commands/${commandID}`,
     );
-    
+
     const response = await fetch(
         guildCommandURLDelete, {
             method: 'DELETE',
@@ -62,13 +61,13 @@ async function deleteSlashCommand(commandName, commandID) {
     // Discord returns 204 no content on success.
     if (response.status === 204) {
         console.log(`'${commandName}' command deleted successfully.`);
-    } 
-    else { 
+    }
+    else {
         const data = await response.json();
         const err = JSON.stringify(data['message']);
-        console.log(`Command not deleted. Error: ${err})`)
+        console.log(`Command not deleted. Error: ${err})`);
     }
-    
+
 }
 
 async function getRegisteredCommands() {
@@ -78,7 +77,7 @@ async function getRegisteredCommands() {
     };
 
     const guild_command_url = api_url.concat(
-        `v8/applications/${clientID}/guilds/${guildID}/commands`);
+        `applications/${clientID}/guilds/${guildID}/commands`);
 
     // GET for list of commands from API
     const response = await fetch(
@@ -94,3 +93,4 @@ async function listRegisteredCommands() {
     const commands = await getRegisteredCommands();
     console.log(commands);
 }
+

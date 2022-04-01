@@ -6,10 +6,11 @@ import WebSocket from 'ws';
 // Command handler functions
 import { commandDict } from './commands.js';
 import { ping } from './command_handler.js';
+import { countdown } from './command_handler.js';
 
 
 const bot_token = process.env.BOT_TOKEN;
-const apiUrl = 'https://discord.com/api';
+const apiUrl = 'https://discord.com/api/v8/';
 const headers = {
     'Authorization': `Bot ${bot_token}`,
 };
