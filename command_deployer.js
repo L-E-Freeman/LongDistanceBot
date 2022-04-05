@@ -6,14 +6,13 @@ const clientID = process.env.CLIENT_ID;
 const guildID = process.env.GUILD_ID;
 const bot_token = process.env.BOT_TOKEN;
 const api_url = 'https://discord.com/api/v8/';
+const headers = {
+    'Authorization': `Bot ${bot_token}`,
+    'Content-Type': 'application/json',
+};
 
 
 async function createSlashCommand(name, description) {
-
-    const headers = {
-        'Authorization': `Bot ${bot_token}`,
-        'Content-Type': 'application/json',
-    };
 
     const guildCommandURL = api_url.concat(
         `applications/${clientID}/guilds/${guildID}/commands`);
@@ -43,11 +42,6 @@ async function createSlashCommand(name, description) {
 
 async function deleteSlashCommand(commandName, commandID) {
 
-    const headers = {
-        'Authorization': `Bot ${bot_token}`,
-        'Content-Type': 'application/json',
-    };
-
     const guildCommandURLDelete = api_url.concat(
         `applications/${clientID}/guilds/${guildID}/commands/${commandID}`,
     );
@@ -72,10 +66,6 @@ async function deleteSlashCommand(commandName, commandID) {
 
 async function getRegisteredCommands() {
 
-    const headers = {
-        'Authorization': `Bot ${bot_token}`,
-    };
-
     const guild_command_url = api_url.concat(
         `applications/${clientID}/guilds/${guildID}/commands`);
 
@@ -93,4 +83,3 @@ async function listRegisteredCommands() {
     const commands = await getRegisteredCommands();
     console.log(commands);
 }
-

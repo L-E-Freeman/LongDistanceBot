@@ -25,7 +25,6 @@ async function getWebsocketGateway() {
 
     const gatewayUrl = data['url'];
 
-    // returns promise which will need to be accessed by using .then()
     return gatewayUrl;
 }
 
@@ -45,11 +44,16 @@ async function initializeWebSocket() {
     return ws;
 }
 
-
-// 'op': Code for type of event
-// 's': Sequence number for resuming. Only present when op is 0.
-// 't': Event name for the payload.
-// 'd': Event data.
+/**
+ * Initializes websocket object. Acts on information sent via payload and
+ * responds appropriately. Handles websocket connection, heartbeating, and
+ * the receiving of slash command interactions.
+ *
+ * 'op': Int - Code for event type.
+ * 's': Int - Sequence number for resuming.
+ * 't': Str - Event name.
+ * 'd': Any JSON value - Event data.
+ */
 async function runBot() {
     const ws = await initializeWebSocket();
 
@@ -65,41 +69,33 @@ async function runBot() {
             identify(ws);
         }
 
-        // Heartbeat acknowledgement from discord.
-        if (discordPayload['op'] == 11) {
-            console.log(`${ Date.now() / 1000 }: Heartbeat Acknowledged!`);
-        }
-
-        // Heartbeat request.
-        if (discordPayload['op'] == 1) {
-            console.log('Heartbeat requested');
-            pulseHeartbeat(ws);
-        }
-
-        // Dispatch received.
-        if (discordPayload['op'] == 0) {
-            // gateway dispatch opcode. store 's' below.
-            // *************************************
-            // TODO: Consider adding function to check type of dispatch.
-            try {
-                const commandName = discordPayload['d']['data']['name'];
-                if (commandName) {
-                    if (commandName in commandDict) {
-                        console.log(`Responding to ${commandName} command`);
-                        commandDict[commandName](discordPayload);
-                    }
-                }
-            }
-            catch (err) {
-                // Command not used
-            }
-        }
-
         // Ready event.
         if (discordPayload['t'] == 'READY') {
             console.log('Discord READY!');
         }
 
+        // Heartbeat request received.
+        if (discordPayload['op'] == 1) {
+            console.log('Heartbeat requested');
+            pulseHeartbeat(ws);
+        }
+
+        // Heartbeat acknowledgement received.
+        if (discordPayload['op'] == 11) {
+            console.log(`${ Date.now() / 1000 }: Heartbeat Acknowledged!`);
+        }
+
+        // Dispatch received.
+        if (discordPayload['op'] == 0) {
+            // TODO: Store sequence number used for resuming here.
+            // User has used a command.
+            if (discordPayload['t'] == 'INTERACTION_CREATE') {
+                const commandName = discordPayload['d']['data']['name'];
+                if (commandName in commandDict) {
+                    commandDict[commandName](discordPayload);
+                }
+            }
+        }
     });
 }
 

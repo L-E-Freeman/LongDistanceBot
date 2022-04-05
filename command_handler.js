@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 import 'dotenv/config';
-import { response } from 'express';
 
 const clientID = process.env.CLIENT_ID;
 const api_url = 'https://discord.com/api/v8/';
