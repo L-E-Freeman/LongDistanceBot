@@ -16,7 +16,7 @@ const headers = {
 };
 
 
-async function getWebsocketGateway() {
+async function getWebSocketGateway() {
 
     // does not require bot authorization
     const gatewayGetUrl = apiUrl.concat('/gateway');
@@ -30,7 +30,7 @@ async function getWebsocketGateway() {
 
 async function initializeWebSocket() {
 
-    const gatewayUrl = await getWebsocketGateway();
+    const gatewayUrl = await getWebSocketGateway();
     const versionEncoding = '/?v=9&encoding=json';
 
     const connectionUrl = gatewayUrl.concat(versionEncoding);
@@ -54,8 +54,8 @@ async function initializeWebSocket() {
  * 't': Str - Event name.
  * 'd': Any JSON value - Event data.
  */
-async function runBot() {
-    const ws = await initializeWebSocket();
+export async function runBot(websocket) {
+    const ws = websocket
 
     ws.on('message', function checkMessageType(data) {
         const discordPayload = JSON.parse(data);
@@ -88,18 +88,23 @@ async function runBot() {
         // Dispatch received.
         if (discordPayload['op'] == 0) {
             // TODO: Store sequence number used for resuming here.
-            // User has used a command.
+            
+            // User has used a command, check command against command 
+            // dictionary and call corresponding function if exists.
             if (discordPayload['t'] == 'INTERACTION_CREATE') {
                 const commandName = discordPayload['d']['data']['name'];
                 if (commandName in commandDict) {
                     commandDict[commandName](discordPayload);
+                }
+                else { 
+                    console.log('No matching command found.')
                 }
             }
         }
     });
 }
 
-async function pulseHeartbeat(ws) {
+export async function pulseHeartbeat(ws) {
     const heartbeatJSON = {
         'op': 1,
         'd': null,
@@ -108,7 +113,7 @@ async function pulseHeartbeat(ws) {
     console.log(`${ Date.now() / 1000 }: Heartbeat sent!`);
 }
 
-async function continueHeartbeat(heartbeatInterval, ws) {
+export async function continueHeartbeat(heartbeatInterval, ws) {
 
     // Wait interval * jitter before sending a heartbeat to discord
     await new Promise(resolve => setTimeout(
@@ -120,7 +125,7 @@ async function continueHeartbeat(heartbeatInterval, ws) {
 
 }
 
-async function identify(ws) {
+export async function identify(ws) {
     const identifyJSON = {
         'op': 2,
         'd': {
@@ -137,4 +142,4 @@ async function identify(ws) {
     ws.send(JSON.stringify(identifyJSON));
 }
 
-runBot();
+runBot(await initializeWebSocket());
